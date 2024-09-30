@@ -1,26 +1,17 @@
-const express = require('express');
 const axios = require('axios');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const app = express();
-app.use(express.json());
-
-let middlewareUrl = `http://${process.env.MIDDLEWARE_IP}:${process.env.MIDDLEWARE_PORT}`;
-
-// Registrar nuevas instancias
-app.post('/registerInstance', async (req, res) => {
-  const newInstance = req.body.url;
+async function registerServer(newServerUrl) {
   try {
-    await axios.post(`${middlewareUrl}/addInstance`, { url: newInstance });
-    res.status(200).json({ message: 'Instancia registrada' });
+    const response = await axios.post(`http://${process.env.MIDDLEWARE_IP}:${process.env.MIDDLEWARE_PORT}/register`, {
+      url: newServerUrl
+    });
+    console.log('Servidor registrado exitosamente:', response.data);
   } catch (error) {
-    console.error('Error registrando la instancia:', error.message);
-    res.status(500).json({ message: 'Error al registrar instancia' });
+    console.error('Error al registrar el servidor:', error.message);
   }
-});
+}
 
-const port = process.env.REGISTER_PORT || 7000;
-app.listen(port, () => {
-  console.log(`Servidor de registro escuchando en el puerto ${port}`);
-});
+const serverUrl = `http://${process.env.SERVER_IP}:${process.env.SERVER_PORT}`;
+registerServer(serverUrl); // Al iniciar, el servidor se registra automáticamente

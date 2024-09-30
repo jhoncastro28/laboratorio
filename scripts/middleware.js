@@ -22,34 +22,44 @@ setInterval(() => {
 
 // Balanceo "Least Connected"
 app.post('/countTokens', async (req, res) => {
+  const axiosInstance = axios.create({
+    timeout: 5000
+  });
+
   const text = req.body.text;
 
+  // Encontrar el servidor con menos conexiones
   let targetServer = servers.reduce((prev, curr) => {
     return prev.connections <= curr.connections ? prev : curr;
   });
 
-  try {
-    const response = await axios.post(`${targetServer.url}/countTokens`, { text });
-    targetServer.connections += 1;
-    res.status(200).json(response.data);
-  } catch (error) {
-    console.error(`Error conectando con el servidor ${targetServer.url}:`, error.message);
-    
-    // Si falla, intenta con el siguiente servidor
-    const otherServer = servers.find(s => s !== targetServer);
-    if (otherServer) {
-      try {
-        const response = await axios.post(`${otherServer.url}/countTokens`, { text });
-        otherServer.connections += 1;
-        res.status(200).json(response.data);
-      } catch (err) {
-        console.error('Ningún servidor respondió:', err.message);
-        res.status(500).json({ message: 'Ningún servidor disponible' });
-      }
-    } else {
-      res.status(500).json({ message: 'Error conectando con los servidores' });
+  // Intentar con todos los servidores
+  for (let i = 0; i < servers.length; i++) {
+    try {
+      const response = await axiosInstance.post(`${servers[i].url}/countTokens`, { text });
+      servers[i].connections += 1;
+      return res.status(200).json(response.data);
+    } catch (error) {
+      console.error(`Error conectando con el servidor ${servers[i].url}:`, error.message);
     }
   }
+
+  res.status(500).json({ message: 'Ningún servidor disponible' });
+});
+
+
+// Para registrar un nuevo servidor
+app.post('/register', (req, res) => {
+  const { url } = req.body;
+
+  const serverExists = servers.find(server => server.url === url);
+  if (serverExists) {
+    return res.status(400).json({ message: 'El servidor ya está registrado' });
+  }
+
+  servers.push({ url, connections: 0 });
+  console.log(`Nuevo servidor registrado: ${url}`);
+  res.status(200).json({ message: 'Servidor registrado exitosamente' });
 });
 
 const port = process.env.MIDDLEWARE_PORT || 8000;

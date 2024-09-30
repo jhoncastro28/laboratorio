@@ -11,19 +11,18 @@ const middlewareUrl = `http://${process.env.MIDDLEWARE_IP}:${process.env.MIDDLEW
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../')));
 
-// Contar los tokens
 app.post('/countTokens', async (req, res) => {
-    const text = req.body.text;
-    
-    try {
-        const response = await axios.post(`${middlewareUrl}/countTokens`, { text });
-        res.status(200).json(response.data);
-    } catch (error) {
-        console.error('Error conectando con el middleware:', error.message);
-        res.status(500).json({ message: 'Error conectando con el middleware' });
-    }
-});
-
+    const log = {
+      timestamp: new Date().toISOString(),
+      method: 'POST',
+      url: req.originalUrl,
+      payload: req.body
+    };
+  
+    // Enviar log al middleware
+    await axios.post(`${middlewareUrl}/log`, { url: process.env.SERVER_URL, log });
+  });
+  
 const port = process.env.PORT || 9000;
 app.listen(port, () => {
     console.log(`Servidor frontend escuchando en el puerto ${port}`);
