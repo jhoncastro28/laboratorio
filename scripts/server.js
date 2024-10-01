@@ -27,3 +27,5 @@ const port = process.env.PORT || 9000;
 app.listen(port, () => {
     console.log(`Servidor frontend escuchando en el puerto ${port}`);
 });
+
+//New-NetFirewallRule -Name sshd -DisplayName 'OpenSSH Server (sshd)' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22
